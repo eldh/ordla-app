@@ -5,9 +5,8 @@ import {
   useMemo,
   useState,
 } from "react";
-import { PlatformColor, SafeAreaView, StyleSheet, View } from "react-native";
-import { Fade } from "./Fade";
-import { H2, Text } from "./Text";
+import { PlatformColor, SafeAreaView, StyleSheet } from "react-native";
+import { Text, Title } from "./Text";
 import { Help } from "./Help";
 import { Keyboard } from "./Keyboard";
 import { ResultsLink } from "./ResultsLink";
@@ -16,43 +15,81 @@ import { Tries } from "./Tries";
 import { usePersistedState } from "./usePersistedState";
 import { useTimer } from "./useTimer";
 import { words } from "./words";
+import { useUpdateEffect } from "./useUpdateEffect";
+import Animated, { FadeInUp, FadeOutUp } from "react-native-reanimated";
 
 export function Game() {
   const [, endOfDay] = useTimer(10000);
   const word = useMemo(() => {
     return getWordForDay(endOfDay);
   }, [endOfDay]);
-  const [tries, setTries] = usePersistedState<string[]>("tries11_" + word, []);
+  const [tries, setTries, triesLoaded] = usePersistedState<string[]>(
+    "tries_" + word,
+    []
+  );
+  const [, setResults, resultsLoaded] = usePersistedState<object>(
+    "results",
+    {}
+  );
+
+  return (
+    <WordGame
+      key={word && triesLoaded && resultsLoaded ? "loaded" : "temp"}
+      word={word}
+      tries={tries}
+      setTries={setTries}
+      setResults={setResults}
+    />
+  );
+}
+function WordGame({
+  word,
+  tries,
+  setTries,
+  setResults,
+}: {
+  word: string;
+  tries: string[];
+  setTries: StateCallback<string[]>;
+  setResults: StateCallback<object>;
+}) {
   const [currentTry, setCurrentTry] = useState("");
-  const [warning, setWarning] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const hasWon = useMemo(() => tries[tries.length - 1] === word, [tries]);
+  const [showNonExistingWordWarning, setShowNonExistingWordWarning] =
+    useState(false);
+  const hasWon = useMemo(() => tries[tries.length - 1] === word, [tries, word]);
   const hasLost = useMemo(() => !hasWon && tries.length === 6, [tries, hasWon]);
+
+  const [showModal, setShowModal] = useState(hasWon || hasLost);
+  const [modalWasShown, setModalWasShown] = useState(showModal);
   useEffect(() => {
-    if (warning) {
+    if (showNonExistingWordWarning) {
       const v = setTimeout(() => {
-        setWarning(false);
+        setShowNonExistingWordWarning(false);
       }, 2000);
       return () => clearTimeout(v);
     }
-  }, [warning]);
+  }, [showNonExistingWordWarning]);
   useEffect(() => {
     if (hasWon || hasLost) {
-      const results = JSON.parse(localStorage.getItem("results") ?? "{}");
-      localStorage.setItem(
-        "results",
-        JSON.stringify({ ...results, [word]: hasLost ? -1 : tries.length })
-      );
+      setResults((r) => ({ ...r, [word]: hasLost ? -1 : tries.length }));
     }
   }, [hasWon, hasLost]);
+
   useLayoutEffect(() => {
     if (hasWon || hasLost) {
-      setShowModal(true);
+      let t = setTimeout(() => {
+        setShowModal(true);
+        setTimeout(() => setModalWasShown(true), 500);
+      }, 1000);
+      return () => clearTimeout(t);
     }
   }, [hasWon, hasLost]);
-  useEffect(() => {
+
+  useUpdateEffect(() => {
     setShowModal(false);
+    setCurrentTry("");
   }, [word]);
+
   const handlePress = useCallback(
     (key: string) => {
       if (key === "Backspace") {
@@ -66,8 +103,8 @@ export function Game() {
         if (isAWord) {
           setTries((t: string[]) => [...t, currentTry]);
           setCurrentTry("");
-        } else {
-          setWarning(true);
+        } else if (currentTry.length === 5) {
+          setShowNonExistingWordWarning(true);
         }
       } else if (!hasWon) {
         setCurrentTry((value) => (value.length < 5 ? value + key : value));
@@ -79,19 +116,17 @@ export function Game() {
   return (
     <SafeAreaView style={styles.container}>
       <Help />
-      <Fade show={warning}>{() => <Warning />}</Fade>
-      <Fade show={showModal}>
-        {() => (
-          <SummaryModal
-            tries={tries}
-            word={word}
-            onClose={() => setShowModal(false)}
-          />
-        )}
-      </Fade>
-      <H2>Ordla</H2>
+      {showNonExistingWordWarning ? <Warning /> : null}
+      {showModal ? (
+        <SummaryModal
+          tries={tries}
+          word={word}
+          onClose={() => setShowModal(false)}
+        />
+      ) : null}
+      <Title>Ordla</Title>
       <Tries word={word} tries={tries} currentTry={currentTry} />
-      {hasWon || hasLost ? (
+      {(hasWon || hasLost) && modalWasShown ? (
         <ResultsLink onPress={() => setShowModal(true)} />
       ) : (
         <Keyboard word={word} tries={tries} onPress={handlePress} />
@@ -104,21 +139,32 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",
-    // justifyContent: "center",
     justifyContent: "space-between",
   },
-  text: {
-    color: "#fff",
+  warning: {
+    position: "absolute",
+    top: 56,
+    shadowColor: "#000000",
+    shadowOpacity: 0.3,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    backgroundColor: PlatformColor("tertiarySystemBackground"),
+    borderRadius: 20,
+    zIndex: 100,
   },
 });
 
 function Warning() {
   return (
-    <Text
-    // className={"warning " + className}
+    <Animated.View
+      style={styles.warning}
+      entering={FadeInUp}
+      exiting={FadeOutUp}
     >
-      Ordet finns inte med i ordlistan.
-    </Text>
+      <Text>Ordet finns inte med i ordlistan.</Text>
+    </Animated.View>
   );
 }
 
@@ -132,3 +178,4 @@ function getWordForDay(date: Date) {
   const index = today / (1000 * 60 * 60 * 24);
   return words[(words.length / 2 + (index - inception)) % words.length];
 }
+type StateCallback<T> = (cb: (prevState: T) => T) => void;

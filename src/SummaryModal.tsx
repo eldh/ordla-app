@@ -1,7 +1,14 @@
-import { useEffect, useState } from "react";
-import { Button, Text, View } from "react-native";
-import { Fade } from "./Fade";
-import { H3 } from "./Text";
+import {
+  Modal,
+  PlatformColor,
+  StyleSheet,
+  Share as RNShare,
+  Button as RNButton,
+  View,
+  Text as RNText,
+} from "react-native";
+import { Button } from "./Button";
+import { H3, Text, B, H1 } from "./Text";
 import { usePersistedState } from "./usePersistedState";
 import { useTimer } from "./useTimer";
 
@@ -24,42 +31,56 @@ export function SummaryModal({
     [0, 0, 0, 0, 0, 0]
   );
   const maxWins = Math.max(...guessDistribution);
+  const winCount = Object.values(results).filter((v) => v > 0).length;
   return (
-    <>
-      <View
-      // className={"modal center gap-m " + className}
-      >
-        <Button
-          // role="button"
-          // tabIndex={0}
-          onPress={onClose}
-          // className="close-btn"
-          title="⨯"
-        >
-          ⨯
-        </Button>
-        <H3>Statistik</H3>
-        <Text>
-          Dagens ord:{" "}
-          <Text
-          // href={`https://svenska.se/tre/?sok=${word}`}
-          // className="capitalize"
-          // target="_new"
-          // rel="noreferrer noopener"
-          >
-            {word}
-          </Text>
-        </Text>
-        <View /* className="row gap-m center" */>
-          <Stat number={Object.keys(results).length} label="Spelade" />
-          <Stat
-            number={Object.values(results).filter((v) => v > 0).length}
-            label="Vinster"
-          />
+    <Modal visible animationType="slide" presentationStyle="pageSheet">
+      <View style={styles.content}>
+        <View style={styles.closeButton}>
+          <RNButton onPress={onClose} title="Stäng" />
         </View>
-        <View>
-          {/* className="gap-m center grow"> */}
-          <Text>Gissningar</Text>
+        <H1>Statistik</H1>
+        <Spacer />
+        <Spacer />
+        <Spacer />
+
+        <View
+          style={{
+            alignItems: "center",
+          }}
+        >
+          <RNText>
+            <Text>Dagens ord: </Text>
+            <Text
+              style={{ textTransform: "capitalize" }}
+              // href={`https://svenska.se/tre/?sok=${word}`}
+              // className="capitalize"
+              // target="_new"
+              // rel="noreferrer noopener"
+            >
+              {word}
+            </Text>
+          </RNText>
+        </View>
+        <Spacer />
+        <View
+          style={{
+            ...styles.row,
+            width: "100%",
+            justifyContent: "center",
+          }}
+        >
+          <Stat number={Object.keys(results).length} label={"Spelade"} />
+          <Spacer />
+          <Stat number={winCount} label={"Vinster"} />
+        </View>
+        <Spacer />
+        <View
+          style={{
+            width: "100%",
+            justifyContent: "center",
+          }}
+        >
+          <H3>Gissningar</H3>
           {/* style={{ fontSize: "16", fontWeight: "600" }} */}
           <View>
             {/*  className="gap-s grow" */}
@@ -74,24 +95,22 @@ export function SummaryModal({
           </View>
         </View>
         <View
-        // className="row gap-l" style={{ marginTop: "36px", gap: "56px" }}
+          style={[styles.row, { justifyContent: "space-around" }]}
+          // className="row gap-l" style={{ marginTop: "36px", gap: "56px" }}
         >
           <Next />
           <Share word={word} tries={tries} />
         </View>
       </View>
-      <View
-      //  className={"modal-bg " + className}
-      />
-    </>
+    </Modal>
   );
 }
 
 function Stat(props: { number: string | number; label: string }) {
   return (
-    <View>
+    <View style={{ alignItems: "center" }}>
       {/* className="center" */}
-      <Text style={{ fontWeight: "900" }}>{props.number}</Text>
+      <B style={{ fontSize: 24 }}>{`${props.number} `}</B>
       <Text
       // style={{ fontSize: "0.75rem" }}
       >
@@ -106,38 +125,35 @@ function Bar(props: { number: number; wins: number; maxWins: number }) {
 
   return (
     <View
-    // className="center row gap-m"
-    // style={{
-    //   width: "100%",
-    //   flexGrow: "1",
-    //   flexShrink: "0",
-    // }}
+      style={{
+        flexDirection: "row",
+        justifyContent: "space-between",
+        width: "100%",
+        marginBottom: 12,
+        alignContent: "center",
+        alignItems: "center",
+      }}
     >
-      <Text
-      // style={{ fontWeight: "900", fontSize: "1.25rem" }}
-      >
-        {number}
-      </Text>
+      <B>{`${number}`}</B>
       <View
-      // style={{
-      //   fontWeight: "900",
-      //   fontSize: "0.875rem",
-      //   width: "100%",
-      // }}
+        style={{
+          flex: 1,
+          marginLeft: 6,
+        }}
       >
-        <Text
-        // style={{
-        //   height: "24px",
-        //   width: (wins / maxWins) * 100 + "%",
-        //   alignItems: "flex-end",
-        //   backgroundColor: wins > 0 ? "var(--bar-color)" : undefined,
-        //   borderRadius: "4px",
-        //   padding: wins > 0 ? "6px" : "6px 18px",
-        // }}
-        // className="center"
+        <View
+          style={{
+            maxWidth: (wins / maxWins) * 100 + "%",
+            borderRadius: 4,
+            padding: 4,
+            justifyContent: "flex-end",
+            alignItems: "flex-end",
+            backgroundColor:
+              wins > 0 ? PlatformColor("systemGreen") : undefined,
+          }}
         >
-          {wins}
-        </Text>
+          <B shadow>{`${wins}`}</B>
+        </View>
       </View>
     </View>
   );
@@ -152,20 +168,15 @@ function Next() {
   let s = (n: number) => (n < 10 ? `0${n}` : n);
 
   return (
-    <View
-    // className="center"
-    >
-      <Text
-      // style={{ fontSize: "0.75rem" }}
-      >
-        Nästa ord:
-      </Text>
-      <Text style={{ fontWeight: "900" }}>{`${s(hours)}:${s(minutes)}:${s(
-        seconds
-      )}`}</Text>
+    <View style={{ alignItems: "center" }}>
+      <Text>Nästa ord:</Text>
+      <B style={{ fontSize: 24, fontVariant: ["tabular-nums"] }}>{`${s(
+        hours
+      )}:${s(minutes)}:${s(seconds)}`}</B>
     </View>
   );
 }
+
 function Share({ tries, word }: { word: string; tries: string[] }) {
   let resultsString = tries
     .map((t) =>
@@ -180,7 +191,6 @@ function Share({ tries, word }: { word: string; tries: string[] }) {
               ?.split("")
               .filter((l2, i) => word[i] === l2)
               .includes(l);
-          const isClose = !isHit;
           return isMiss || hitIsElsewhere ? "⬛" : isHit ? "🟩" : "🟨";
         })
         .join("")
@@ -188,7 +198,7 @@ function Share({ tries, word }: { word: string; tries: string[] }) {
     .join("\n");
 
   const data = {
-    url: window.location.href,
+    url: "",
     text: `Ordla, ${new Date().getDate()} ${monthStr(new Date().getMonth())}:
 
 ${resultsString}
@@ -196,19 +206,9 @@ ${resultsString}
     title: "Ordla",
   };
 
-  const [copied, setCopied] = useState(false);
-  useEffect(() => {
-    if (copied) {
-      const v = setTimeout(() => {
-        setCopied(false);
-      }, 2000);
-      return () => clearTimeout(v);
-    }
-  }, [copied]);
-
   return (
     <>
-      <Fade show={copied}>
+      {/* <Fade show={copied}>
         {() => (
           <View
           // style={{ top: "-20px" }}
@@ -217,18 +217,19 @@ ${resultsString}
             <Text>Resultatet har kopierats</Text>
           </View>
         )}
-      </Fade>
+      </Fade> */}
       <Button
         // className="share-btn"
         onPress={() => {
-          if (navigator.share) {
-            navigator.share(data);
-          } else if (navigator.clipboard) {
-            navigator.clipboard.writeText(data.text);
-            setCopied(true);
-          } else {
-            alert("Kunde inte dela");
-          }
+          RNShare.share({
+            title: "Ordla",
+            message: `Ordla, ${new Date().getDate()} ${monthStr(
+              new Date().getMonth()
+            )}:
+
+${resultsString}
+`,
+          });
         }}
         title="Dela"
       />
@@ -252,3 +253,35 @@ function monthStr(m: number) {
     "december",
   ][m];
 }
+
+function Spacer() {
+  return <View style={styles.spacer} />;
+}
+
+const styles = StyleSheet.create({
+  button: {
+    position: "absolute",
+    top: 24,
+    right: 24,
+  },
+  closeButton: {
+    position: "absolute",
+    top: 20,
+    right: 12,
+    zIndex: 10,
+  },
+  spacer: {
+    height: 18,
+    width: 18,
+  },
+  row: { flexDirection: "row" },
+  content: {
+    flex: 1,
+    padding: 24,
+    paddingTop: 24,
+    backgroundColor: PlatformColor("secondarySystemBackground"),
+  },
+  example: {
+    flexDirection: "row",
+  },
+});

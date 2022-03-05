@@ -3,12 +3,14 @@ import { useAsyncStorage } from "@react-native-async-storage/async-storage";
 export function usePersistedState<T>(
   key: string,
   initialValue: T
-): [T, (cb: (prevState: T) => T) => void] {
+): [T, (cb: (prevState: T) => T) => void, boolean] {
   const { getItem, setItem } = useAsyncStorage(key);
   const [v, setV_] = useState<T>(initialValue);
+  const [hasLoaded, setHasLoaded] = useState<boolean>(false);
   useEffect(() => {
     // Buggy!
     getItem().then((value) => {
+      setHasLoaded(true);
       setV(value ? JSON.parse(value) : initialValue);
     });
   }, [key]);
@@ -23,5 +25,5 @@ export function usePersistedState<T>(
     setV_(cb);
   }, []);
 
-  return [v, setV];
+  return [v, setV, hasLoaded];
 }

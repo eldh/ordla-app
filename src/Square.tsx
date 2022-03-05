@@ -10,7 +10,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { Text } from "./Text";
-import { useUpdateEffect } from "./useUpdateEffect";
+import { useTheme } from "./Theme";
 
 export function Square(props: {
   letter?: string;
@@ -67,7 +67,7 @@ export function Square(props: {
     isExtranousAlmost = indicesOfOccurrencesInGuess[index] !== 1;
   }
 
-  let letterAnimationStyle = useTypingAnimation(letter);
+  let letterAnimationStyle = useTypingAnimation();
   const bgStyle = useColorAnimation({ hit, almost, index });
   const rotateStyle = useRotateAnimation({ isCurrentTry, index, letter });
 
@@ -92,14 +92,15 @@ export function EmptySquare() {
   return <View style={styles.container} />;
 }
 
-function useTypingAnimation(letter?: string) {
+function useTypingAnimation() {
   const animationValue = useSharedValue(0);
+  const theme = useTheme();
 
   const style = useAnimatedStyle(() => {
     const backgroundColor = interpolateColor(
       animationValue.value,
       [0, 1],
-      ["#333333", "#888888"]
+      [theme.bg1, theme.bg3]
     );
 
     return {
@@ -109,7 +110,7 @@ function useTypingAnimation(letter?: string) {
 
   const bounce = React.useCallback(() => {
     animationValue.value = withSequence(
-      withTiming(0.3, {
+      withTiming(0.8, {
         duration: 10,
         easing: Easing.elastic(1),
       }),
@@ -133,6 +134,7 @@ function useColorAnimation({
   index: number;
 }) {
   const bgAnimation = useSharedValue(hit ? 1 : almost ? -1 : 0);
+  const theme = useTheme();
 
   const shouldAnimate = React.useRef(false);
   React.useEffect(() => {
@@ -150,7 +152,7 @@ function useColorAnimation({
     const backgroundColor = interpolateColor(
       bgAnimation.value,
       [-1, 0, 1],
-      ["#ee33ee", "#333333", "#33aa33"]
+      [theme.orange, theme.bg1, theme.green]
     );
 
     return {
@@ -204,12 +206,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: PlatformColor("tertiarySystemBackground"),
     height: 50,
+    width: 50,
     margin: 2,
     borderRadius: 6,
     shadowColor: "#000000",
     shadowOpacity: 0.3,
     shadowRadius: 2,
-    width: 50,
     shadowOffset: { width: 0, height: 2 },
   },
   text: {
@@ -217,15 +219,6 @@ const styles = StyleSheet.create({
     color: PlatformColor("label"),
     fontWeight: "600",
     fontSize: 20,
-  },
-  almost: {
-    backgroundColor: PlatformColor("systemOrange"),
-  },
-  hit: {
-    backgroundColor: PlatformColor("systemGreen"),
-  },
-  miss: {
-    backgroundColor: PlatformColor("secondarySystemBackground"),
   },
 });
 const REVEAL_DELAY = 200;

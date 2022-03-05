@@ -5,14 +5,40 @@ import {
   Text as RNText,
 } from "react-native";
 
-export function H3({ children, style }: Props) {
-  return <Text style={StyleSheet.compose(styles.h3, style)}>{children}</Text>;
+export function H3({ children, style, ...etc }: Props) {
+  return (
+    <Text style={StyleSheet.compose(styles.h3, style)} {...etc}>
+      {children}
+    </Text>
+  );
 }
-export function H2({ children, style }: Props) {
-  return <Text style={StyleSheet.compose(styles.h2, style)}>{children}</Text>;
+export function H2({ children, style, ...etc }: Props) {
+  return (
+    <Text style={StyleSheet.compose(styles.h2, style)} {...etc}>
+      {children}
+    </Text>
+  );
 }
-export function B({ children, style }: Props) {
-  return <Text style={StyleSheet.compose(styles.b, style)}>{children}</Text>;
+export function H1({ children, style, ...etc }: Props) {
+  return (
+    <Text style={StyleSheet.compose(styles.h1, style)} {...etc}>
+      {children}
+    </Text>
+  );
+}
+export function Title({ children, style, ...etc }: Props) {
+  return (
+    <Text style={StyleSheet.compose(styles.title, style)} {...etc}>
+      {children}
+    </Text>
+  );
+}
+export function B({ children, style, ...etc }: Props) {
+  return (
+    <Text style={StyleSheet.compose(styles.b, style)} {...etc}>
+      {children}
+    </Text>
+  );
 }
 export function Text({ children, style, shadow }: Props) {
   return (
@@ -27,19 +53,34 @@ const styles = StyleSheet.create({
   text: {
     color: PlatformColor("label"),
   },
-  h2: {
+  title: {
     color: PlatformColor("label"),
     textTransform: "uppercase",
     fontSize: 48,
     fontWeight: "800",
     letterSpacing: 4,
   },
-  h3: {
+  h1: {
     color: PlatformColor("label"),
-    textTransform: "uppercase",
-    fontSize: 24,
+    fontSize: 34,
+    lineHeight: 41,
+    fontWeight: "800",
+    letterSpacing: 0.4,
+  },
+
+  h2: {
+    color: PlatformColor("label"),
+    fontSize: 28,
+    lineHeight: 34,
     fontWeight: "800",
     letterSpacing: 1,
+  },
+  h3: {
+    color: PlatformColor("label"),
+    fontSize: 28,
+    lineHeight: 34,
+    fontWeight: "700",
+    letterSpacing: 0.2,
   },
   shadow: {
     textShadowColor: "#000000b0",

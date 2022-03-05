@@ -1,4 +1,4 @@
-import { useState } from "react";
+import * as React from "react";
 import {
   PlatformColor,
   StyleProp,
@@ -7,6 +7,7 @@ import {
   View,
 } from "react-native";
 import { Text } from "./Text";
+import { useTheme } from "./Theme";
 
 export function Keyboard(props: {
   onPress: (key: string) => void;
@@ -49,7 +50,7 @@ export function Key(props: {
   word: string;
 }) {
   const { key_, onPress, tries, word } = props;
-  const [pressed, setPressed] = useState(false);
+  const [pressed, setPressed] = React.useState(false);
 
   const hit = tries.some((try_) =>
     try_.split("").some((letter, i) => letter === key_ && letter === word[i])
@@ -66,19 +67,25 @@ export function Key(props: {
     </Text>
   );
 
+  const theme = useTheme();
+
+  const colorStyle = React.useMemo(() => {
+    return {
+      backgroundColor: hit
+        ? theme.green
+        : almost
+        ? theme.orange
+        : miss
+        ? theme.bg1
+        : theme.bg2,
+    };
+  }, [hit, almost, miss]);
+
   return (
     <View
       style={StyleSheet.compose(
         keyStyles.key,
-        doubleSize
-          ? keyStyles.double
-          : hit
-          ? keyStyles.hit
-          : almost
-          ? keyStyles.almost
-          : miss
-          ? keyStyles.miss
-          : undefined
+        doubleSize ? [keyStyles.double, colorStyle] : colorStyle
       )}
     >
       <TouchableNativeFeedback
@@ -136,7 +143,6 @@ export function Key(props: {
 
 const keyStyles = StyleSheet.create({
   key: {
-    backgroundColor: PlatformColor("tertiarySystemBackground"),
     height: 40,
     justifyContent: "center",
     alignItems: "center",
@@ -179,15 +185,6 @@ const keyStyles = StyleSheet.create({
   },
   double: {
     flex: 2,
-  },
-  almost: {
-    backgroundColor: PlatformColor("systemOrange"),
-  },
-  hit: {
-    backgroundColor: PlatformColor("systemGreen"),
-  },
-  miss: {
-    backgroundColor: PlatformColor("secondarySystemBackground"),
   },
 });
 

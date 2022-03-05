@@ -19,9 +19,9 @@ export function Help({}: {}) {
       </View>
       <Modal
         animationType="slide"
+        presentationStyle="pageSheet"
         visible={help}
         onRequestClose={() => setHelp(false)}
-        presentationStyle="pageSheet"
       >
         <View style={styles.content}>
           <View style={styles.closeButton}>
