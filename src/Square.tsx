@@ -10,7 +10,14 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { Text } from "./Text";
-import { useTheme } from "./Theme";
+import {
+  darkTheme,
+  lightTheme,
+  themeColor,
+  useIsDarkMode,
+  useShadowStyle,
+  useTheme,
+} from "./Theme";
 
 export function Square(props: {
   letter?: string;
@@ -20,7 +27,8 @@ export function Square(props: {
   word: string;
 }) {
   const { index, letter, word, isCurrentTry, guess } = props;
-
+  const shadowStyle = useShadowStyle("shadow2");
+  const isDarkMode = useIsDarkMode();
   const hit = !isCurrentTry && word[index] === letter;
   const letterOccurrances = word.split("").filter((l) => l === letter).length;
   const letterHitsElsewhere =
@@ -74,13 +82,13 @@ export function Square(props: {
   return (
     <Animated.View
       style={StyleSheet.compose(styles.container, [
-        bgStyle,
         rotateStyle,
-        isCurrentTry ? letterAnimationStyle : (undefined as StyleProp<object>),
+        isCurrentTry ? letterAnimationStyle : bgStyle,
+        shadowStyle,
       ])}
     >
       {letter ? (
-        <Text style={styles.text} shadow>
+        <Text style={styles.text} shadow={isDarkMode}>
           {letter}
         </Text>
       ) : null}
@@ -89,18 +97,26 @@ export function Square(props: {
 }
 
 export function EmptySquare() {
-  return <View style={styles.container} />;
+  const shadowStyle = useShadowStyle("shadow2");
+  return <View style={StyleSheet.compose(styles.container, [shadowStyle])} />;
 }
 
 function useTypingAnimation() {
-  const animationValue = useSharedValue(0);
-  const theme = useTheme();
+  const themeFactor = useIsDarkMode() ? -10 : 10;
+  const animationValue = useSharedValue(themeFactor);
 
   const style = useAnimatedStyle(() => {
     const backgroundColor = interpolateColor(
       animationValue.value,
-      [0, 1],
-      [theme.bg1, theme.bg3]
+      [-10, -9, -8, 10, 11, 12],
+      [
+        darkTheme.bg1,
+        darkTheme.bg3,
+        darkTheme.bg2,
+        lightTheme.bg1,
+        "#eaeaea",
+        lightTheme.bg3,
+      ] as any
     );
 
     return {
@@ -110,11 +126,14 @@ function useTypingAnimation() {
 
   const bounce = React.useCallback(() => {
     animationValue.value = withSequence(
-      withTiming(0.8, {
+      withTiming(themeFactor + 1, {
         duration: 10,
         easing: Easing.elastic(1),
       }),
-      withTiming(0, { duration: 250, easing: Easing.out(Easing.ease) })
+      withTiming(themeFactor + 2, {
+        duration: 250,
+        easing: Easing.out(Easing.ease),
+      })
     );
   }, []);
   React.useEffect(() => {
@@ -133,8 +152,8 @@ function useColorAnimation({
   almost: boolean;
   index: number;
 }) {
-  const bgAnimation = useSharedValue(hit ? 1 : almost ? -1 : 0);
-  const theme = useTheme();
+  const themeFactor = useTheme() === darkTheme ? -10 : 10;
+  const bgAnimation = useSharedValue(themeFactor + (hit ? 1 : almost ? -1 : 0));
 
   const shouldAnimate = React.useRef(false);
   React.useEffect(() => {
@@ -143,7 +162,9 @@ function useColorAnimation({
     } else if (shouldAnimate.current && (hit || almost)) {
       bgAnimation.value = withDelay(
         index * REVEAL_DELAY + REVEAL_DELAY / 2,
-        withTiming(hit ? 1 : almost ? -1 : 0, { duration: REVEAL_DELAY / 4 })
+        withTiming(themeFactor + (hit ? 1 : almost ? -1 : 0), {
+          duration: REVEAL_DELAY / 4,
+        })
       );
     }
   }, [hit, almost]);
@@ -151,8 +172,15 @@ function useColorAnimation({
   return useAnimatedStyle(() => {
     const backgroundColor = interpolateColor(
       bgAnimation.value,
-      [-1, 0, 1],
-      [theme.orange, theme.bg1, theme.green]
+      [-11, -10, -9, 9, 10, 11],
+      [
+        darkTheme.orange,
+        darkTheme.bg2,
+        darkTheme.green,
+        lightTheme.orange,
+        lightTheme.bg3,
+        lightTheme.green,
+      ] as any
     );
 
     return {
@@ -204,19 +232,15 @@ const styles = StyleSheet.create({
   container: {
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: PlatformColor("tertiarySystemBackground"),
+    backgroundColor: themeColor("bg1"),
     height: 50,
     width: 50,
     margin: 2,
     borderRadius: 6,
-    shadowColor: "#000000",
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    shadowOffset: { width: 0, height: 2 },
   },
   text: {
     textTransform: "uppercase",
-    color: PlatformColor("label"),
+    color: themeColor("text"),
     fontWeight: "600",
     fontSize: 20,
   },

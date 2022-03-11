@@ -1,13 +1,12 @@
 import * as React from "react";
 import {
-  PlatformColor,
   StyleProp,
   StyleSheet,
   TouchableNativeFeedback,
   View,
 } from "react-native";
 import { Text } from "./Text";
-import { useTheme } from "./Theme";
+import { darkTheme, themeColor, useShadowStyle, useTheme } from "./Theme";
 
 export function Keyboard(props: {
   onPress: (key: string) => void;
@@ -62,12 +61,16 @@ export function Key(props: {
     word.indexOf(key_) === -1 && tries.some((t) => t.indexOf(key_) > -1);
   const doubleSize = ["Backspace", "Enter"].includes(key_);
   const key = (moreStyles?: StyleProp<object>) => (
-    <Text shadow style={StyleSheet.compose(keyStyles.text, moreStyles)}>
+    <Text
+      shadow={theme === darkTheme}
+      style={StyleSheet.compose(keyStyles.text, moreStyles)}
+    >
       {key_ === "Backspace" ? "←" : key_}
     </Text>
   );
 
   const theme = useTheme();
+  const shadowStyle = useShadowStyle("shadow1");
 
   const colorStyle = React.useMemo(() => {
     return {
@@ -79,14 +82,14 @@ export function Key(props: {
         ? theme.bg1
         : theme.bg2,
     };
-  }, [hit, almost, miss]);
+  }, [hit, almost, miss, theme]);
 
   return (
     <View
-      style={StyleSheet.compose(
-        keyStyles.key,
-        doubleSize ? [keyStyles.double, colorStyle] : colorStyle
-      )}
+      style={StyleSheet.compose(keyStyles.key, [
+        doubleSize ? [keyStyles.double, colorStyle] : colorStyle,
+        shadowStyle,
+      ])}
     >
       <TouchableNativeFeedback
         onPressIn={() => {
@@ -95,42 +98,9 @@ export function Key(props: {
         onPressOut={() => {
           setPressed(false);
         }}
-        // className={
-        //   "keyboard__key center" + (pressed ? " keyboard__key--pressed" : "")
-        // }
-        // onPointerDown={(e) => {
-        //   onPress(key_);
-        //   prevent(e);
-        //   setPressed(true);
-        // }}
         onPress={(_e) => {
           onPress(key_);
-          // prevent(e);
         }}
-        // onPointerUp={(e) => {
-        //   prevent(e);
-        //   setPressed(false);
-        // }}
-        // onPointerLeave={(e) => {
-        //   setPressed(false);
-        // }}
-        // onPointerMove={(e) => {
-        //   setPressed(false);
-        // }}
-        // style={{
-        //   width: ["Enter", "Backspace"].includes(key_) ? "82px" : "38px",
-        //   height: "38px",
-        //   textTransform: "uppercase",
-        //   flexShrink: 1,
-        //   background: hit
-        //     ? "var(--btn-bg--hit)"
-        //     : almost
-        //     ? "var(--btn-bg--almost)"
-        //     : miss
-        //     ? "var(--btn-bg--miss)"
-        //     : "var(--btn-bg)",
-        // }}
-        // title={key}
       >
         <View style={keyStyles.touchable}>{key()}</View>
       </TouchableNativeFeedback>
@@ -149,10 +119,6 @@ const keyStyles = StyleSheet.create({
     margin: 2,
     borderRadius: 6,
     flex: 1,
-    shadowColor: "#000000",
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    shadowOffset: { width: 0, height: 2 },
   },
   touchable: {
     flex: 1,
@@ -164,13 +130,14 @@ const keyStyles = StyleSheet.create({
     fontWeight: "600",
     textTransform: "capitalize",
     fontSize: 17,
+    color: themeColor("text1"),
   },
   textCallout: {
     fontSize: 20,
   },
   extra: {
     width: "120%",
-    backgroundColor: PlatformColor("tertiarySystemBackground"),
+    backgroundColor: themeColor("bg2"),
     height: 60,
     justifyContent: "center",
     alignItems: "center",
@@ -178,10 +145,6 @@ const keyStyles = StyleSheet.create({
     borderRadius: 8,
     borderTopRightRadius: 8,
     top: -62,
-    shadowColor: "#000000",
-    shadowOpacity: 0.5,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
   },
   double: {
     flex: 2,

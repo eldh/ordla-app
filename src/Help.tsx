@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { B, H3, Text } from "./Text";
 import { Square } from "./Square";
+import { themeColor } from "./Theme";
 
 export function Help({}: {}) {
   const [help, setHelp] = useState(false);
@@ -89,7 +90,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
     paddingTop: 62,
-    backgroundColor: PlatformColor("secondarySystemBackground"),
+    backgroundColor: themeColor("bg"),
   },
   example: {
     flexDirection: "row",

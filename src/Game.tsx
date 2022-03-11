@@ -17,6 +17,8 @@ import { useTimer } from "./useTimer";
 import { words } from "./words";
 import { useUpdateEffect } from "./useUpdateEffect";
 import Animated, { FadeInUp, FadeOutUp } from "react-native-reanimated";
+import { Button } from "./Button";
+import { themeColor, themeShadow } from "./Theme";
 
 export function Game() {
   const [, endOfDay] = useTimer(10000);
@@ -144,13 +146,9 @@ const styles = StyleSheet.create({
   warning: {
     position: "absolute",
     top: 56,
-    shadowColor: "#000000",
-    shadowOpacity: 0.3,
     paddingHorizontal: 15,
     paddingVertical: 12,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    backgroundColor: PlatformColor("tertiarySystemBackground"),
+    backgroundColor: themeColor("bg1"),
     borderRadius: 20,
     zIndex: 100,
   },

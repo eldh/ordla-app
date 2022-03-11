@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "ordla",
+    "name": "Ordla",
     "slug": "ordla",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -16,7 +16,9 @@
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.eldh.ordla",
+      "buildNumber": "1.0.0"
     },
     "android": {
       "adaptiveIcon": {

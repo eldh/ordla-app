@@ -1,4 +1,5 @@
-import { PlatformColor, Pressable, StyleSheet, Text, View } from "react-native";
+import { DynamicColorIOS, Pressable, StyleSheet, Text } from "react-native";
+import { darkTheme, lightTheme } from "./Theme";
 
 export function Button(props: { title: string; onPress: () => void }) {
   const { onPress } = props;
@@ -14,7 +15,10 @@ export function Button(props: { title: string; onPress: () => void }) {
 
 const styles = StyleSheet.create({
   base: {
-    backgroundColor: PlatformColor("systemBlue"),
+    backgroundColor: DynamicColorIOS({
+      light: lightTheme.bg2,
+      dark: darkTheme.bg2,
+    }),
     paddingTop: 10,
     paddingLeft: 14,
     paddingRight: 14,
@@ -24,11 +28,18 @@ const styles = StyleSheet.create({
     flex: 0,
     flexShrink: 0,
     alignSelf: "center",
+    shadowColor: "#000000",
+    shadowOpacity: 0.7,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 2 },
   },
   text: {
-    color: "#ffffff",
+    color: DynamicColorIOS({
+      light: lightTheme.text1,
+      dark: darkTheme.text1,
+    }),
     textAlign: "left",
-    fontWeight: "normal",
+    fontWeight: "600",
     fontSize: 17,
   },
   pressed: {
