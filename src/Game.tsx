@@ -1,11 +1,5 @@
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useState,
-} from "react";
-import { PlatformColor, SafeAreaView, StyleSheet } from "react-native";
+import { useCallback, useEffect, useMemo } from "react";
+import { SafeAreaView, StyleSheet } from "react-native";
 import { Text, Title } from "./Text";
 import { Help } from "./Help";
 import { Keyboard } from "./Keyboard";
@@ -17,8 +11,9 @@ import { useTimer } from "./useTimer";
 import { words } from "./words";
 import { useUpdateEffect } from "./useUpdateEffect";
 import Animated, { FadeInUp, FadeOutUp } from "react-native-reanimated";
-import { Button } from "./Button";
-import { themeColor, themeShadow } from "./Theme";
+import { themeColor } from "./Theme";
+import { emitEffect, useReducerWithEffects } from "./useReducerWithEffects";
+import { notReachable } from "./notReachable";
 
 export function Game() {
   const [, endOfDay] = useTimer(10000);
@@ -26,90 +21,156 @@ export function Game() {
     return getWordForDay(endOfDay);
   }, [endOfDay]);
   const [tries, setTries, triesLoaded] = usePersistedState<string[]>(
-    "tries_" + word,
+    "tries3_" + word,
     []
   );
-  const [, setResults, resultsLoaded] = usePersistedState<object>(
-    "results",
-    {}
-  );
+  const [results, setResults, resultsLoaded] = usePersistedState<
+    Record<string, number>
+  >("results", {});
 
   return (
     <WordGame
       key={word && triesLoaded && resultsLoaded ? "loaded" : "temp"}
       word={word}
       tries={tries}
+      results={results}
       setTries={setTries}
       setResults={setResults}
     />
   );
 }
+
+type GameState = {
+  currentTry: string;
+  showNonExistingWordWarning: boolean;
+  showModal: boolean;
+  showResults: boolean;
+  tries: string[];
+  results: Record<string, number>;
+};
+
+type Action =
+  | { type: "resetCurrentTry" }
+  | { type: "setShowModal"; payload: boolean }
+  | { type: "setShowResults"; payload: boolean }
+  | { type: "setShowNonExistingWordWarning"; payload: boolean }
+  | { type: "backspace" }
+  | { type: "enter" }
+  | { type: "addKey"; payload: string };
+
 function WordGame({
   word,
-  tries,
+  tries: initialTries,
+  results: initialResults,
   setTries,
   setResults,
 }: {
   word: string;
   tries: string[];
   setTries: StateCallback<string[]>;
-  setResults: StateCallback<object>;
+  setResults: StateCallback<Record<string, number>>;
+  results: Record<string, number>;
 }) {
-  const [currentTry, setCurrentTry] = useState("");
-  const [showNonExistingWordWarning, setShowNonExistingWordWarning] =
-    useState(false);
-  const hasWon = useMemo(() => tries[tries.length - 1] === word, [tries, word]);
-  const hasLost = useMemo(() => !hasWon && tries.length === 6, [tries, hasWon]);
-
-  const [showModal, setShowModal] = useState(hasWon || hasLost);
-  const [modalWasShown, setModalWasShown] = useState(showModal);
-  useEffect(() => {
-    if (showNonExistingWordWarning) {
-      const v = setTimeout(() => {
-        setShowNonExistingWordWarning(false);
-      }, 2000);
-      return () => clearTimeout(v);
+  const [s, dispatch] = useReducerWithEffects<GameState, Action>(
+    (state: GameState, action: Action) => {
+      switch (action.type) {
+        case "enter":
+          const isAWord =
+            state.currentTry.length === 5 &&
+            words.indexOf(state.currentTry) > -1;
+          if (isAWord) {
+            emitEffect(() => {
+              setTries((t) => [...t, state.currentTry]);
+              if (state.currentTry === word) {
+                setResults((r) => ({ ...r, [word]: state.tries.length + 1 }));
+                let t = setTimeout(() => {
+                  dispatch({ type: "setShowModal", payload: true });
+                  setTimeout(() => {
+                    dispatch({ type: "setShowResults", payload: true });
+                  }, 500);
+                }, 1000);
+                return () => clearTimeout(t);
+              }
+            });
+            return {
+              ...state,
+              currentTry: "",
+              tries: [...state.tries, state.currentTry],
+              results: { ...state.results, [word]: state.tries.length + 1 },
+            };
+          } else if (state.currentTry.length === 5) {
+            return { ...state, showNonExistingWordWarning: true };
+          }
+        case "backspace":
+          return {
+            ...state,
+            currentTry: state.currentTry.substring(
+              0,
+              state.currentTry.length - 1
+            ),
+          };
+        case "addKey":
+          return { ...state, currentTry: state.currentTry + action.payload };
+        case "resetCurrentTry":
+          return {
+            ...state,
+            currentTry: "",
+            showModal: false,
+            showResults: false,
+          };
+        case "setShowModal":
+          return { ...state, showModal: action.payload };
+        case "setShowResults":
+          return { ...state, showResults: action.payload };
+        case "setShowNonExistingWordWarning":
+          if (action.payload) {
+            emitEffect(() => {
+              const v = setTimeout(() => {
+                dispatch({
+                  type: "setShowNonExistingWordWarning",
+                  payload: false,
+                });
+              }, 2000);
+              return () => clearTimeout(v);
+            });
+          }
+          return { ...state, showNonExistingWordWarning: action.payload };
+        default:
+          throw notReachable(action);
+      }
+    },
+    {
+      tries: initialTries,
+      results: initialResults,
+      currentTry: "",
+      showModal: false,
+      showResults: didWin(initialTries, word) || didLose(initialTries, word),
+      showNonExistingWordWarning: false,
     }
-  }, [showNonExistingWordWarning]);
-  useEffect(() => {
-    if (hasWon || hasLost) {
-      setResults((r) => ({ ...r, [word]: hasLost ? -1 : tries.length }));
-    }
-  }, [hasWon, hasLost]);
-
-  useLayoutEffect(() => {
-    if (hasWon || hasLost) {
-      let t = setTimeout(() => {
-        setShowModal(true);
-        setTimeout(() => setModalWasShown(true), 500);
-      }, 1000);
-      return () => clearTimeout(t);
-    }
-  }, [hasWon, hasLost]);
+  );
+  const {
+    tries,
+    results,
+    currentTry,
+    showModal,
+    showResults,
+    showNonExistingWordWarning,
+  } = s;
+  const hasWon = didWin(tries, word);
+  const hasLost = didLose(tries, word);
 
   useUpdateEffect(() => {
-    setShowModal(false);
-    setCurrentTry("");
+    dispatch({ type: "resetCurrentTry" });
   }, [word]);
 
   const handlePress = useCallback(
     (key: string) => {
       if (key === "Backspace") {
-        setCurrentTry((v) => v.substring(0, v.length - 1));
+        dispatch({ type: "backspace" });
       } else if (key === "Enter") {
-        if (hasWon) {
-          setShowModal(true);
-        }
-        const isAWord =
-          currentTry.length === 5 && words.indexOf(currentTry) > -1;
-        if (isAWord) {
-          setTries((t: string[]) => [...t, currentTry]);
-          setCurrentTry("");
-        } else if (currentTry.length === 5) {
-          setShowNonExistingWordWarning(true);
-        }
+        dispatch({ type: "enter" });
       } else if (!hasWon) {
-        setCurrentTry((value) => (value.length < 5 ? value + key : value));
+        dispatch({ type: "addKey", payload: key });
       }
     },
     [currentTry]
@@ -122,14 +183,17 @@ function WordGame({
       {showModal ? (
         <SummaryModal
           tries={tries}
+          results={results}
           word={word}
-          onClose={() => setShowModal(false)}
+          onClose={() => dispatch({ type: "setShowModal", payload: false })}
         />
       ) : null}
       <Title>Ordla</Title>
       <Tries word={word} tries={tries} currentTry={currentTry} />
-      {(hasWon || hasLost) && modalWasShown ? (
-        <ResultsLink onPress={() => setShowModal(true)} />
+      {(hasWon || hasLost) && showResults ? (
+        <ResultsLink
+          onPress={() => dispatch({ type: "setShowModal", payload: true })}
+        />
       ) : (
         <Keyboard word={word} tries={tries} onPress={handlePress} />
       )}
@@ -177,3 +241,10 @@ function getWordForDay(date: Date) {
   return words[(words.length / 2 + (index - inception)) % words.length];
 }
 type StateCallback<T> = (cb: (prevState: T) => T) => void;
+
+function didWin(tries: string[], word: string) {
+  return tries[tries.length - 1] === word;
+}
+function didLose(tries: string[], word: string) {
+  return !didWin(tries, word) && tries.length === 6;
+}

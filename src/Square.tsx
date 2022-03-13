@@ -154,7 +154,6 @@ function useColorAnimation({
 }) {
   const themeFactor = useTheme() === darkTheme ? -10 : 10;
   const bgAnimation = useSharedValue(themeFactor + (hit ? 1 : almost ? -1 : 0));
-
   const shouldAnimate = React.useRef(false);
   React.useEffect(() => {
     if (!shouldAnimate.current) {

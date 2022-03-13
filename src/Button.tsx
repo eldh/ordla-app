@@ -1,11 +1,15 @@
 import { DynamicColorIOS, Pressable, StyleSheet, Text } from "react-native";
-import { darkTheme, lightTheme } from "./Theme";
-
+import { darkTheme, lightTheme, useShadowStyle } from "./Theme";
 export function Button(props: { title: string; onPress: () => void }) {
+  const shadowStyle = useShadowStyle("shadow1");
   const { onPress } = props;
   return (
     <Pressable
-      style={({ pressed }) => [styles.base, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.base,
+        pressed && styles.pressed,
+        shadowStyle,
+      ]}
       onPress={onPress}
     >
       <Text style={styles.text}>{props.title}</Text>
@@ -28,10 +32,6 @@ const styles = StyleSheet.create({
     flex: 0,
     flexShrink: 0,
     alignSelf: "center",
-    shadowColor: "#000000",
-    shadowOpacity: 0.7,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 2 },
   },
   text: {
     color: DynamicColorIOS({

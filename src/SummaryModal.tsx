@@ -9,20 +9,19 @@ import {
 } from "react-native";
 import { Button } from "./Button";
 import { H3, Text, B, H1 } from "./Text";
-import { usePersistedState } from "./usePersistedState";
 import { useTimer } from "./useTimer";
 
 export function SummaryModal({
   onClose,
   tries,
+  results,
   word,
 }: {
   onClose(): void;
   tries: string[];
   word: string;
+  results: Record<string, number>;
 }) {
-  const [results] = usePersistedState<Record<string, number>>("results", {});
-
   const guessDistribution = Object.values(results).reduce(
     (memo, v) => {
       memo[v - 1] = memo[v - 1] + 1;
