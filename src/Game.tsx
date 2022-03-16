@@ -30,7 +30,7 @@ export function Game() {
 
   return (
     <WordGame
-      key={word && triesLoaded && resultsLoaded ? "loaded" : "temp"}
+      key={word && triesLoaded && resultsLoaded ? `loaded_${word}` : "temp"}
       word={word}
       tries={tries}
       results={results}
@@ -50,10 +50,9 @@ type GameState = {
 };
 
 type Action =
-  | { type: "resetCurrentTry" }
   | { type: "setShowModal"; payload: boolean }
   | { type: "setShowResults"; payload: boolean }
-  | { type: "setShowNonExistingWordWarning"; payload: boolean }
+  | { type: "hideNonExistingWordWarning" }
   | { type: "backspace" }
   | { type: "enter" }
   | { type: "addKey"; payload: string };
@@ -82,7 +81,18 @@ function WordGame({
             emitEffect(() => {
               setTries((t) => [...t, state.currentTry]);
               if (state.currentTry === word) {
+                // Won
                 setResults((r) => ({ ...r, [word]: state.tries.length + 1 }));
+                let t = setTimeout(() => {
+                  dispatch({ type: "setShowModal", payload: true });
+                  setTimeout(() => {
+                    dispatch({ type: "setShowResults", payload: true });
+                  }, 500);
+                }, 1000);
+                return () => clearTimeout(t);
+              } else if (state.tries.length === 5) {
+                // Lost
+                setResults((r) => ({ ...r, [word]: 0 }));
                 let t = setTimeout(() => {
                   dispatch({ type: "setShowModal", payload: true });
                   setTimeout(() => {
@@ -99,6 +109,12 @@ function WordGame({
               results: { ...state.results, [word]: state.tries.length + 1 },
             };
           } else if (state.currentTry.length === 5) {
+            emitEffect(() => {
+              const v = setTimeout(() => {
+                dispatch({ type: "hideNonExistingWordWarning" });
+              }, 2000);
+              return () => clearTimeout(v);
+            });
             return { ...state, showNonExistingWordWarning: true };
           }
         case "backspace":
@@ -111,30 +127,12 @@ function WordGame({
           };
         case "addKey":
           return { ...state, currentTry: state.currentTry + action.payload };
-        case "resetCurrentTry":
-          return {
-            ...state,
-            currentTry: "",
-            showModal: false,
-            showResults: false,
-          };
         case "setShowModal":
           return { ...state, showModal: action.payload };
         case "setShowResults":
           return { ...state, showResults: action.payload };
-        case "setShowNonExistingWordWarning":
-          if (action.payload) {
-            emitEffect(() => {
-              const v = setTimeout(() => {
-                dispatch({
-                  type: "setShowNonExistingWordWarning",
-                  payload: false,
-                });
-              }, 2000);
-              return () => clearTimeout(v);
-            });
-          }
-          return { ...state, showNonExistingWordWarning: action.payload };
+        case "hideNonExistingWordWarning":
+          return { ...state, showNonExistingWordWarning: false };
         default:
           throw notReachable(action);
       }
@@ -158,10 +156,6 @@ function WordGame({
   } = s;
   const hasWon = didWin(tries, word);
   const hasLost = didLose(tries, word);
-
-  useUpdateEffect(() => {
-    dispatch({ type: "resetCurrentTry" });
-  }, [word]);
 
   const handlePress = useCallback(
     (key: string) => {
@@ -246,5 +240,5 @@ function didWin(tries: string[], word: string) {
   return tries[tries.length - 1] === word;
 }
 function didLose(tries: string[], word: string) {
-  return !didWin(tries, word) && tries.length === 6;
+  return !didWin(tries, word) && tries.length >= 6;
 }
