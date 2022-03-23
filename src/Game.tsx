@@ -126,7 +126,9 @@ function WordGame({
             ),
           };
         case "addKey":
-          return { ...state, currentTry: state.currentTry + action.payload };
+          return state.currentTry.length >= 5
+            ? state
+            : { ...state, currentTry: state.currentTry + action.payload };
         case "setShowModal":
           return { ...state, showModal: action.payload };
         case "setShowResults":
