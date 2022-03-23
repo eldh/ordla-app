@@ -47,6 +47,7 @@ type GameState = {
   showResults: boolean;
   tries: string[];
   results: Record<string, number>;
+  nonExistingWordGuesses: number;
 };
 
 type Action =
@@ -109,13 +110,18 @@ function WordGame({
               results: { ...state.results, [word]: state.tries.length + 1 },
             };
           } else if (state.currentTry.length === 5) {
+            setTimeout;
             emitEffect(() => {
               const v = setTimeout(() => {
                 dispatch({ type: "hideNonExistingWordWarning" });
               }, 2000);
               return () => clearTimeout(v);
             });
-            return { ...state, showNonExistingWordWarning: true };
+            return {
+              ...state,
+              showNonExistingWordWarning: true,
+              nonExistingWordGuesses: state.nonExistingWordGuesses + 1,
+            };
           }
         case "backspace":
           return {
@@ -146,6 +152,7 @@ function WordGame({
       showModal: false,
       showResults: didWin(initialTries, word) || didLose(initialTries, word),
       showNonExistingWordWarning: false,
+      nonExistingWordGuesses: 0,
     }
   );
   const {
@@ -155,6 +162,7 @@ function WordGame({
     showModal,
     showResults,
     showNonExistingWordWarning,
+    nonExistingWordGuesses,
   } = s;
   const hasWon = didWin(tries, word);
   const hasLost = didLose(tries, word);
@@ -185,13 +193,23 @@ function WordGame({
         />
       ) : null}
       <Title>Ordla</Title>
-      <Tries word={word} tries={tries} currentTry={currentTry} />
+      <Tries
+        word={word}
+        tries={tries}
+        currentTry={currentTry}
+        key={word + nonExistingWordGuesses + "tries"}
+      />
       {(hasWon || hasLost) && showResults ? (
         <ResultsLink
           onPress={() => dispatch({ type: "setShowModal", payload: true })}
         />
       ) : (
-        <Keyboard word={word} tries={tries} onPress={handlePress} />
+        <Keyboard
+          word={word}
+          tries={tries}
+          onPress={handlePress}
+          key={word + nonExistingWordGuesses + "keys"}
+        />
       )}
     </SafeAreaView>
   );
