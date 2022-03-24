@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo } from "react";
-import { SafeAreaView, StyleSheet } from "react-native";
+import { useCallback, useMemo } from "react";
+import { SafeAreaView, StyleSheet, View } from "react-native";
 import { Text, Title } from "./Text";
 import { Help } from "./Help";
 import { Keyboard } from "./Keyboard";
@@ -9,7 +9,6 @@ import { Tries } from "./Tries";
 import { usePersistedState } from "./usePersistedState";
 import { useTimer } from "./useTimer";
 import { words } from "./words";
-import { useUpdateEffect } from "./useUpdateEffect";
 import Animated, { FadeInUp, FadeOutUp } from "react-native-reanimated";
 import { themeColor } from "./Theme";
 import { emitEffect, useReducerWithEffects } from "./useReducerWithEffects";
@@ -181,37 +180,41 @@ function WordGame({
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Help />
-      {showNonExistingWordWarning ? <Warning /> : null}
-      {showModal ? (
-        <SummaryModal
-          tries={tries}
-          results={results}
-          word={word}
-          onClose={() => dispatch({ type: "setShowModal", payload: false })}
-        />
-      ) : null}
-      <Title>Ordla</Title>
-      <Tries
-        word={word}
-        tries={tries}
-        currentTry={currentTry}
-        key={word + nonExistingWordGuesses + "tries"}
-      />
-      {(hasWon || hasLost) && showResults ? (
-        <ResultsLink
-          onPress={() => dispatch({ type: "setShowModal", payload: true })}
-        />
-      ) : (
-        <Keyboard
+    <>
+      {/* {showNonExistingWordWarning ? (
+        <Warning key={`${showNonExistingWordWarning}warn`} />
+      ) : null} */}
+      <SafeAreaView style={styles.container}>
+        <Help />
+        {showModal ? (
+          <SummaryModal
+            tries={tries}
+            results={results}
+            word={word}
+            onClose={() => dispatch({ type: "setShowModal", payload: false })}
+          />
+        ) : null}
+        <Title>Ordla</Title>
+        <Tries
           word={word}
           tries={tries}
-          onPress={handlePress}
-          key={word + nonExistingWordGuesses + "keys"}
+          currentTry={currentTry}
+          key={word + nonExistingWordGuesses + "tries"}
         />
-      )}
-    </SafeAreaView>
+        {(hasWon || hasLost) && showResults ? (
+          <ResultsLink
+            onPress={() => dispatch({ type: "setShowModal", payload: true })}
+          />
+        ) : (
+          <Keyboard
+            word={word}
+            tries={tries}
+            onPress={handlePress}
+            key={word + nonExistingWordGuesses + "keys"}
+          />
+        )}
+      </SafeAreaView>
+    </>
   );
 }
 
@@ -223,24 +226,29 @@ const styles = StyleSheet.create({
   },
   warning: {
     position: "absolute",
-    top: 56,
+    top: 0,
     paddingHorizontal: 15,
     paddingVertical: 12,
     backgroundColor: themeColor("bg1"),
     borderRadius: 20,
+  },
+  warningWrapper: {
+    position: "absolute",
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 100,
+    top: 28,
   },
 });
 
 function Warning() {
   return (
-    <Animated.View
-      style={styles.warning}
-      entering={FadeInUp}
-      exiting={FadeOutUp}
-    >
-      <Text>Ordet finns inte med i ordlistan.</Text>
-    </Animated.View>
+    <View style={styles.warningWrapper}>
+      <View style={styles.warning}>
+        <Text>Ordet finns inte inte med i ordlistan.</Text>
+      </View>
+    </View>
   );
 }
 

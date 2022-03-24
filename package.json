@@ -9,6 +9,7 @@
     "web": "expo start --web",
     "eject": "expo eject",
     "build:dev": "eas build -p ios --profile preview",
+    "build:local": "eas build -p ios --profile development",
     "build:prod": "eas build -p ios --profile production"
   },
   "dependencies": {
