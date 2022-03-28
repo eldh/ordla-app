@@ -74,8 +74,8 @@ function Spacer() {
 const styles = StyleSheet.create({
   button: {
     position: "absolute",
-    top: 60,
     right: 24,
+    marginTop: 30,
   },
   closeButton: {
     position: "absolute",

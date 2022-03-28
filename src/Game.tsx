@@ -180,12 +180,10 @@ function WordGame({
   );
 
   return (
-    <>
-      {/* {showNonExistingWordWarning ? (
-        <Warning key={`${showNonExistingWordWarning}warn`} />
-      ) : null} */}
+    <Animated.View style={{ flex: 1 }}>
       <SafeAreaView style={styles.container}>
         <Help />
+        {showNonExistingWordWarning ? <Warning /> : null}
         {showModal ? (
           <SummaryModal
             tries={tries}
@@ -214,7 +212,7 @@ function WordGame({
           />
         )}
       </SafeAreaView>
-    </>
+    </Animated.View>
   );
 }
 
@@ -245,9 +243,13 @@ const styles = StyleSheet.create({
 function Warning() {
   return (
     <View style={styles.warningWrapper}>
-      <View style={styles.warning}>
+      <Animated.View
+        style={styles.warning}
+        entering={FadeInUp}
+        exiting={FadeOutUp}
+      >
         <Text>Ordet finns inte inte med i ordlistan.</Text>
-      </View>
+      </Animated.View>
     </View>
   );
 }
