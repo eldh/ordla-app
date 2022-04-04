@@ -9,7 +9,11 @@ import { Tries } from "./Tries";
 import { usePersistedState } from "./usePersistedState";
 import { useTimer } from "./useTimer";
 import { words } from "./words";
-import Animated, { FadeInUp, FadeOutUp } from "react-native-reanimated";
+import Animated, {
+  FadeInUp,
+  FadeOut,
+  FadeOutUp,
+} from "react-native-reanimated";
 import { themeColor } from "./Theme";
 import { emitEffect, useReducerWithEffects } from "./useReducerWithEffects";
 import { notReachable } from "./notReachable";
@@ -53,6 +57,7 @@ type Action =
   | { type: "setShowModal"; payload: boolean }
   | { type: "setShowResults"; payload: boolean }
   | { type: "hideNonExistingWordWarning" }
+  | { type: "showNonExistingWordWarning" }
   | { type: "backspace" }
   | { type: "enter" }
   | { type: "addKey"; payload: string };
@@ -109,18 +114,13 @@ function WordGame({
               results: { ...state.results, [word]: state.tries.length + 1 },
             };
           } else if (state.currentTry.length === 5) {
-            setTimeout;
             emitEffect(() => {
               const v = setTimeout(() => {
-                dispatch({ type: "hideNonExistingWordWarning" });
-              }, 2000);
+                dispatch({ type: "showNonExistingWordWarning" });
+              }, 10);
               return () => clearTimeout(v);
             });
-            return {
-              ...state,
-              showNonExistingWordWarning: true,
-              nonExistingWordGuesses: state.nonExistingWordGuesses + 1,
-            };
+            return state;
           }
         case "backspace":
           return {
@@ -136,6 +136,18 @@ function WordGame({
             : { ...state, currentTry: state.currentTry + action.payload };
         case "setShowModal":
           return { ...state, showModal: action.payload };
+        case "showNonExistingWordWarning":
+          emitEffect(() => {
+            const v = setTimeout(() => {
+              dispatch({ type: "hideNonExistingWordWarning" });
+            }, 2000);
+            return () => clearTimeout(v);
+          });
+          return {
+            ...state,
+            showNonExistingWordWarning: true,
+            nonExistingWordGuesses: state.nonExistingWordGuesses + 1,
+          };
         case "setShowResults":
           return { ...state, showResults: action.payload };
         case "hideNonExistingWordWarning":
@@ -180,7 +192,7 @@ function WordGame({
   );
 
   return (
-    <Animated.View style={{ flex: 1 }}>
+    <Animated.View style={{ flex: 1 }} exiting={FadeOut}>
       <SafeAreaView style={styles.container}>
         <Help />
         {showNonExistingWordWarning ? <Warning /> : null}
@@ -245,8 +257,8 @@ function Warning() {
     <View style={styles.warningWrapper}>
       <Animated.View
         style={styles.warning}
-        entering={FadeInUp}
-        exiting={FadeOutUp}
+        entering={FadeInUp.delay(100)}
+        exiting={FadeOutUp.delay(100)}
       >
         <Text>Ordet finns inte inte med i ordlistan.</Text>
       </Animated.View>
