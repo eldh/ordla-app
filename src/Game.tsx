@@ -213,6 +213,7 @@ function WordGame({
         />
         {(hasWon || hasLost) && showResults ? (
           <ResultsLink
+            style={{ paddingBottom: 81, paddingTop: 10 }}
             onPress={() => dispatch({ type: "setShowModal", payload: true })}
           />
         ) : (

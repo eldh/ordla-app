@@ -1,10 +1,13 @@
-import { View } from "react-native";
+import { StyleProp, View } from "react-native";
 import { Button } from "./Button";
 
-export function ResultsLink(props: { onPress: () => void }) {
-  const { onPress } = props;
+export function ResultsLink(props: {
+  onPress: () => void;
+  style?: StyleProp<object>;
+}) {
+  const { onPress, ...etc } = props;
   return (
-    <View>
+    <View {...etc}>
       <Button title="Statistik" onPress={onPress} />
     </View>
   );
