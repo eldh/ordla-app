@@ -30,30 +30,30 @@ export function Game() {
     return getWordForDay(endOfDay);
   }, [endOfDay]);
   const [state, setState] = useState<Record<string, any>>({});
+  const triesKey = "tries5_" + word;
 
   // @ts-ignore
   useEffect(async () => {
     try {
-      let tries = JSON.parse(
-        (await AsyncStorage.getItem("tries4_" + word)) ?? "[]"
-      );
+      let tries = JSON.parse((await AsyncStorage.getItem(triesKey)) ?? "[]");
       let results = JSON.parse((await AsyncStorage.getItem("results")) ?? "{}");
+
       setState((s) => ({
         ...s,
-        ["tries4_" + word]: tries,
-        ["results"]: results,
+        [triesKey]: tries,
+        results,
       }));
     } catch (error) {}
   }, [word]);
 
   const setTries: StateCallback<string[]> = (cb) => {
-    const t = cb(state["tries4_" + word]);
+    const t = cb(state[triesKey]);
 
     setState((s) => ({
       ...s,
-      ["tries4_" + word]: t,
+      [triesKey]: t,
     }));
-    AsyncStorage.setItem("tries4_" + word, JSON.stringify(t));
+    AsyncStorage.setItem(triesKey, JSON.stringify(t));
   };
   const setResults: StateCallback<Record<string, number>> = (cb) => {
     const r = cb(state.results);
@@ -64,15 +64,17 @@ export function Game() {
     AsyncStorage.setItem("results", JSON.stringify(r));
   };
 
-  return (
+  return word && state[triesKey] && state.results ? (
     <WordGame
       key={word ? `loaded_${word}` : "temp"}
       word={word}
-      tries={state["tries4_" + word] ?? []}
-      results={state["results"] ?? {}}
+      tries={state[triesKey]}
+      results={state.results}
       setTries={setTries}
       setResults={setResults}
     />
+  ) : (
+    <LoadingBoard />
   );
 }
 type GameProps = {
@@ -280,6 +282,18 @@ function WordGame(props: GameProps) {
   );
 }
 
+function LoadingBoard() {
+  return (
+    <Animated.View style={{ flex: 1 }} exiting={FadeOut}>
+      <SafeAreaView style={styles.container}>
+        <Help />
+        <Title>Ordla</Title>
+        <Tries word="xxxxx" tries={[]} currentTry={""} key="xxxxx_tries" />
+        <Keyboard word="xxxxx" tries={[]} onPress={() => {}} key="xxxxx_key" />
+      </SafeAreaView>
+    </Animated.View>
+  );
+}
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -300,7 +314,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     zIndex: 100,
-    top: 28,
+    top: 48,
   },
 });
 
