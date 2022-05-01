@@ -1,4 +1,10 @@
-import { useCallback, useMemo } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from "react";
 import { SafeAreaView, StyleSheet, View } from "react-native";
 import { Text, Title } from "./Text";
 import { Help } from "./Help";
@@ -6,7 +12,6 @@ import { Keyboard } from "./Keyboard";
 import { ResultsLink } from "./ResultsLink";
 import { SummaryModal } from "./SummaryModal";
 import { Tries } from "./Tries";
-import { usePersistedState } from "./usePersistedState";
 import { useTimer } from "./useTimer";
 import { words } from "./words";
 import Animated, {
@@ -17,37 +22,73 @@ import Animated, {
 import { themeColor } from "./Theme";
 import { emitEffect, useReducerWithEffects } from "./useReducerWithEffects";
 import { notReachable } from "./notReachable";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export function Game() {
   const [, endOfDay] = useTimer(10000);
   const word = useMemo(() => {
     return getWordForDay(endOfDay);
   }, [endOfDay]);
-  const [tries, setTries, triesLoaded] = usePersistedState<string[]>(
-    "tries3_" + word,
-    []
-  );
-  const [results, setResults, resultsLoaded] = usePersistedState<
-    Record<string, number>
-  >("results", {});
+  const [state, setState] = useState<Record<string, any>>({});
+
+  // @ts-ignore
+  useEffect(async () => {
+    try {
+      let tries = JSON.parse(
+        (await AsyncStorage.getItem("tries4_" + word)) ?? "[]"
+      );
+      let results = JSON.parse((await AsyncStorage.getItem("results")) ?? "{}");
+      setState((s) => ({
+        ...s,
+        ["tries4_" + word]: tries,
+        ["results"]: results,
+      }));
+    } catch (error) {}
+  }, [word]);
+
+  const setTries: StateCallback<string[]> = (cb) => {
+    const t = cb(state["tries4_" + word]);
+
+    setState((s) => ({
+      ...s,
+      ["tries4_" + word]: t,
+    }));
+    AsyncStorage.setItem("tries4_" + word, JSON.stringify(t));
+  };
+  const setResults: StateCallback<Record<string, number>> = (cb) => {
+    const r = cb(state.results);
+    setState((s) => ({
+      ...s,
+      ["results"]: r,
+    }));
+    AsyncStorage.setItem("results", JSON.stringify(r));
+  };
 
   return (
     <WordGame
-      key={word && triesLoaded && resultsLoaded ? `loaded_${word}` : "temp"}
+      key={word ? `loaded_${word}` : "temp"}
       word={word}
-      tries={tries}
-      results={results}
+      tries={state["tries4_" + word] ?? []}
+      results={state["results"] ?? {}}
       setTries={setTries}
       setResults={setResults}
     />
   );
 }
+type GameProps = {
+  word: string;
+  tries: string[];
+  setTries: StateCallback<string[]>;
+  setResults: StateCallback<Record<string, number>>;
+  results: Record<string, number>;
+};
 
 type GameState = {
   currentTry: string;
   showNonExistingWordWarning: boolean;
   showModal: boolean;
   showResults: boolean;
+  word: string;
   tries: string[];
   results: Record<string, number>;
   nonExistingWordGuesses: number;
@@ -60,21 +101,30 @@ type Action =
   | { type: "showNonExistingWordWarning" }
   | { type: "backspace" }
   | { type: "enter" }
+  | { type: "reset"; payload: GameProps }
   | { type: "addKey"; payload: string };
 
-function WordGame({
-  word,
-  tries: initialTries,
-  results: initialResults,
-  setTries,
-  setResults,
-}: {
-  word: string;
-  tries: string[];
-  setTries: StateCallback<string[]>;
-  setResults: StateCallback<Record<string, number>>;
-  results: Record<string, number>;
-}) {
+function getInitialState(props: GameProps) {
+  const {
+    word: initialWord,
+    tries: initialTries,
+    results: initialResults,
+  } = props;
+  return {
+    word: initialWord,
+    tries: initialTries,
+    results: initialResults,
+    currentTry: "",
+    showModal: false,
+    showResults:
+      didWin(initialTries, initialWord) || didLose(initialTries, initialWord),
+    showNonExistingWordWarning: false,
+    nonExistingWordGuesses: 0,
+  };
+}
+
+function WordGame(props: GameProps) {
+  const { word: initialWord, setTries, setResults } = props;
   const [s, dispatch] = useReducerWithEffects<GameState, Action>(
     (state: GameState, action: Action) => {
       switch (action.type) {
@@ -150,23 +200,18 @@ function WordGame({
           };
         case "setShowResults":
           return { ...state, showResults: action.payload };
+        case "reset":
+          return getInitialState(action.payload);
         case "hideNonExistingWordWarning":
           return { ...state, showNonExistingWordWarning: false };
         default:
           throw notReachable(action);
       }
     },
-    {
-      tries: initialTries,
-      results: initialResults,
-      currentTry: "",
-      showModal: false,
-      showResults: didWin(initialTries, word) || didLose(initialTries, word),
-      showNonExistingWordWarning: false,
-      nonExistingWordGuesses: 0,
-    }
+    getInitialState(props)
   );
   const {
+    word,
     tries,
     results,
     currentTry,
@@ -177,6 +222,12 @@ function WordGame({
   } = s;
   const hasWon = didWin(tries, word);
   const hasLost = didLose(tries, word);
+
+  useLayoutEffect(() => {
+    if (word !== initialWord) {
+      dispatch({ type: "reset", payload: props });
+    }
+  }, [initialWord]);
 
   const handlePress = useCallback(
     (key: string) => {
@@ -277,7 +328,6 @@ function getWordForDay(date: Date) {
   const index = today / (1000 * 60 * 60 * 24);
   return words[(words.length / 2 + (index - inception)) % words.length];
 }
-type StateCallback<T> = (cb: (prevState: T) => T) => void;
 
 function didWin(tries: string[], word: string) {
   return tries[tries.length - 1] === word;
@@ -285,3 +335,4 @@ function didWin(tries: string[], word: string) {
 function didLose(tries: string[], word: string) {
   return !didWin(tries, word) && tries.length >= 6;
 }
+type StateCallback<T> = (cb: (prevState: T) => T) => void;
