@@ -1,21 +1,20 @@
 import { useState } from "react";
-import {
-  Button,
-  Modal,
-  PlatformColor,
-  StyleSheet,
-  View,
-  Text as RNText,
-} from "react-native";
+import { Button, Modal, StyleSheet, View, Text as RNText } from "react-native";
 import { B, H3, Text } from "./Text";
 import { Square } from "./Square";
 import { themeColor } from "./Theme";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export function Help({}: {}) {
   const [help, setHelp] = useState(false);
+  const insets = useSafeAreaInsets();
   return (
     <>
-      <View style={styles.button}>
+      <View
+        style={StyleSheet.compose(styles.button, {
+          top: insets.top + 8,
+        } as any)}
+      >
         <Button title="?" onPress={() => setHelp(true)} />
       </View>
       <Modal
@@ -75,7 +74,6 @@ const styles = StyleSheet.create({
   button: {
     position: "absolute",
     right: 24,
-    marginTop: 30,
   },
   closeButton: {
     position: "absolute",

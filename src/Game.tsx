@@ -23,6 +23,7 @@ import { themeColor } from "./Theme";
 import { emitEffect, useReducerWithEffects } from "./useReducerWithEffects";
 import { notReachable } from "./notReachable";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export function Game() {
   const [, endOfDay] = useTimer(10000);
@@ -248,7 +249,7 @@ function WordGame(props: GameProps) {
     <Animated.View style={{ flex: 1 }} exiting={FadeOut}>
       <SafeAreaView style={styles.container}>
         <Help />
-        {showNonExistingWordWarning ? <Warning /> : null}
+        {showNonExistingWordWarning ? <NotAWordWarning /> : null}
         {showModal ? (
           <SummaryModal
             tries={tries}
@@ -318,9 +319,15 @@ const styles = StyleSheet.create({
   },
 });
 
-function Warning() {
+function NotAWordWarning() {
+  const insets = useSafeAreaInsets();
+
   return (
-    <View style={styles.warningWrapper}>
+    <View
+      style={StyleSheet.compose(styles.warningWrapper, {
+        top: insets.top + 6,
+      } as any)}
+    >
       <Animated.View
         style={styles.warning}
         entering={FadeInUp.delay(100)}
