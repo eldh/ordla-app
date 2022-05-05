@@ -93,6 +93,7 @@ type GameState = {
   showResults: boolean;
   word: string;
   tries: string[];
+  delayedTries: string[];
   results: Record<string, number>;
   nonExistingWordGuesses: number;
 };
@@ -100,6 +101,7 @@ type GameState = {
 type Action =
   | { type: "setShowModal"; payload: boolean }
   | { type: "setShowResults"; payload: boolean }
+  | { type: "setDelayedTries" }
   | { type: "hideNonExistingWordWarning" }
   | { type: "showNonExistingWordWarning" }
   | { type: "backspace" }
@@ -116,6 +118,7 @@ function getInitialState(props: GameProps) {
   return {
     word: initialWord,
     tries: initialTries,
+    delayedTries: initialTries,
     results: initialResults,
     currentTry: "",
     showModal: false,
@@ -138,16 +141,22 @@ function WordGame(props: GameProps) {
           if (isAWord) {
             emitEffect(() => {
               setTries((t) => [...t, state.currentTry]);
+              const t1 = setTimeout(() => {
+                dispatch({ type: "setDelayedTries" });
+              }, 1000);
               if (state.currentTry === word) {
                 // Won
                 setResults((r) => ({ ...r, [word]: state.tries.length + 1 }));
-                let t = setTimeout(() => {
+                let t2 = setTimeout(() => {
                   dispatch({ type: "setShowModal", payload: true });
                   setTimeout(() => {
                     dispatch({ type: "setShowResults", payload: true });
                   }, 500);
                 }, 1000);
-                return () => clearTimeout(t);
+                return () => {
+                  clearTimeout(t1);
+                  clearTimeout(t2);
+                };
               } else if (state.tries.length === 5) {
                 // Lost
                 setResults((r) => ({ ...r, [word]: 0 }));
@@ -183,6 +192,11 @@ function WordGame(props: GameProps) {
               state.currentTry.length - 1
             ),
           };
+        case "setDelayedTries":
+          return {
+            ...state,
+            delayedTries: state.tries,
+          };
         case "addKey":
           return state.currentTry.length >= 5
             ? state
@@ -216,6 +230,7 @@ function WordGame(props: GameProps) {
   const {
     word,
     tries,
+    delayedTries,
     results,
     currentTry,
     showModal,
@@ -273,7 +288,7 @@ function WordGame(props: GameProps) {
         ) : (
           <Keyboard
             word={word}
-            tries={tries}
+            tries={delayedTries}
             onPress={handlePress}
             key={word + nonExistingWordGuesses + "keys"}
           />
@@ -347,7 +362,7 @@ const inception =
 function getWordForDay(date: Date) {
   const today = date.setUTCHours(0, 0, 0, 0);
   const index = today / (1000 * 60 * 60 * 24);
-  return words[(words.length / 2 + (index - inception)) % words.length];
+  return words[-1 + ((words.length / 2 + (index - inception)) % words.length)];
 }
 
 function didWin(tries: string[], word: string) {

@@ -98,7 +98,19 @@ export function Square(props: {
 
 export function EmptySquare() {
   const shadowStyle = useShadowStyle("shadow2");
-  return <View style={StyleSheet.compose(styles.container, [shadowStyle])} />;
+  const isDarkMode = useIsDarkMode();
+  const theme = useTheme();
+  const themeSpecificStyle = isDarkMode
+    ? { backgroundColor: theme.bg1 }
+    : { backgroundColor: theme.bg2 };
+  return (
+    <View
+      style={StyleSheet.compose(styles.container, [
+        shadowStyle,
+        themeSpecificStyle,
+      ])}
+    />
+  );
 }
 
 function useTypingAnimation() {
@@ -113,8 +125,8 @@ function useTypingAnimation() {
         darkTheme.bg1,
         darkTheme.bg3,
         darkTheme.bg2,
+        lightTheme.bg2,
         lightTheme.bg1,
-        "#eaeaea",
         lightTheme.bg3,
       ] as any
     );
@@ -231,7 +243,7 @@ const styles = StyleSheet.create({
   container: {
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: themeColor("bg1"),
+    // backgroundColor: themeColor("bg1"),
     height: 50,
     width: 50,
     margin: 2,

@@ -3,7 +3,7 @@ import { ColorValue, DynamicColorIOS, ShadowStyleIOS } from "react-native";
 
 export const lightTheme: Theme = {
   bg: "#f0f0f0",
-  bg1: "#f8f8f8",
+  bg1: "#dfdfdf",
   bg2: "#fbfbfb",
   bg3: "#ffffff",
   text: "#222222",
