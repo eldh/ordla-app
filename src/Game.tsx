@@ -362,7 +362,7 @@ const inception =
 function getWordForDay(date: Date) {
   const today = date.setUTCHours(0, 0, 0, 0);
   const index = today / (1000 * 60 * 60 * 24);
-  return words[-1 + ((words.length / 2 + (index - inception)) % words.length)];
+  return words[(words.length / 2 + (index - inception)) % words.length];
 }
 
 function didWin(tries: string[], word: string) {
