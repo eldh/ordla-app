@@ -33,18 +33,21 @@ export function Game() {
   const [state, setState] = useState<Record<string, any>>({});
   const triesKey = "tries5_" + word;
 
-  // @ts-ignore
-  useEffect(async () => {
-    try {
-      let tries = JSON.parse((await AsyncStorage.getItem(triesKey)) ?? "[]");
-      let results = JSON.parse((await AsyncStorage.getItem("results")) ?? "{}");
+  useEffect(() => {
+    (async () => {
+      try {
+        let tries = JSON.parse((await AsyncStorage.getItem(triesKey)) ?? "[]");
+        let results = JSON.parse(
+          (await AsyncStorage.getItem("results")) ?? "{}"
+        );
 
-      setState((s) => ({
-        ...s,
-        [triesKey]: tries,
-        results,
-      }));
-    } catch (error) {}
+        setState((s) => ({
+          ...s,
+          [triesKey]: tries,
+          results,
+        }));
+      } catch (error) {}
+    })();
   }, [word]);
 
   const setTries: StateCallback<string[]> = (cb) => {
