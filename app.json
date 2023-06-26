@@ -2,7 +2,7 @@
   "expo": {
     "name": "Ordla",
     "slug": "ordla",
-    "version": "1.0.10",
+    "version": "1.0.12",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -28,6 +28,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.svg"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "284480d5-ec65-4478-ab9a-851b7d45cc59"
+      }
     }
   }
 }
