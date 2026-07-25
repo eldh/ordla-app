@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:docs.expo.dev)",
+      "WebFetch(domain:expo.dev)",
+      "Bash(npx expo install:*)",
+      "Bash(npx expo-doctor@latest:*)",
+      "Bash(yarn remove:*)"
+    ]
+  }
+}
