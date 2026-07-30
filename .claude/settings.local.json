@@ -6,7 +6,12 @@
       "WebFetch(domain:expo.dev)",
       "Bash(npx expo install:*)",
       "Bash(npx expo-doctor@latest:*)",
-      "Bash(yarn remove:*)"
+      "Bash(yarn remove:*)",
+      "Bash(node *)",
+      "WebFetch(domain:github.com)",
+      "Skill(claude-in-chrome)",
+      "Bash(npx tsc *)",
+      "Bash(pkill -f \"expo start --web --port 8092\")"
     ]
   }
 }

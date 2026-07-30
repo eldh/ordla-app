@@ -15,9 +15,11 @@ import { Tries } from "./Tries";
 import { useTimer } from "./useTimer";
 import { words } from "./words";
 import Animated, {
-  FadeInUp,
   FadeOut,
-  FadeOutUp,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withTiming,
 } from "react-native-reanimated";
 import { themeColor } from "./Theme";
 import { emitEffect, useReducerWithEffects } from "./useReducerWithEffects";
@@ -267,7 +269,7 @@ function WordGame(props: GameProps) {
     <Animated.View style={{ flex: 1 }} exiting={FadeOut}>
       <SafeAreaView style={styles.container}>
         <Help />
-        {showNonExistingWordWarning ? <NotAWordWarning /> : null}
+        <NotAWordWarning visible={showNonExistingWordWarning} />
         {showModal ? (
           <SummaryModal
             tries={tries}
@@ -320,8 +322,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   warning: {
-    position: "absolute",
-    top: 0,
     paddingHorizontal: 15,
     paddingVertical: 12,
     backgroundColor: themeColor("bg1"),
@@ -337,21 +337,36 @@ const styles = StyleSheet.create({
   },
 });
 
-function NotAWordWarning() {
+function NotAWordWarning({ visible }: { visible: boolean }) {
   const insets = useSafeAreaInsets();
+  // Reanimated 4 layout animations (entering/exiting) crash on the New
+  // Architecture when a view is conditionally mounted/unmounted, so we drive
+  // the fade with a shared value on an always-mounted view instead.
+  const progress = useSharedValue(0);
+
+  useEffect(() => {
+    progress.value = withDelay(100, withTiming(visible ? 1 : 0, { duration: 200 }));
+  }, [visible]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: progress.value,
+    transform: [{ translateY: (1 - progress.value) * 8 }],
+  }));
 
   return (
     <View
+      pointerEvents="none"
       style={StyleSheet.compose(styles.warningWrapper, {
         top: insets.top + 6,
       } as any)}
     >
-      <Animated.View
-        style={styles.warning}
-        entering={FadeInUp.delay(100)}
-        exiting={FadeOutUp.delay(100)}
-      >
-        <Text>Ordet finns inte inte med i ordlistan.</Text>
+      {/* Animate opacity/transform on a color-free view; keep the
+          DynamicColorIOS background on a plain child so Reanimated never
+          parses the color object ("Invalid color value: [object Object]"). */}
+      <Animated.View style={animatedStyle}>
+        <View style={styles.warning}>
+          <Text>Ordet finns inte inte med i ordlistan.</Text>
+        </View>
       </Animated.View>
     </View>
   );
