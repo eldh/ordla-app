@@ -60,7 +60,14 @@ function Example({ word, guess }: { word: string; guess: string }) {
       //className="row gap-s"
     >
       {guess.split("").map((l, i) => (
-        <Square word={word} letter={l} key={l} index={i} isCurrentTry={false} />
+        <Square
+          word={word}
+          guess={guess}
+          letter={l}
+          key={l}
+          index={i}
+          isCurrentTry={false}
+        />
       ))}
     </View>
   );

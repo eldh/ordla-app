@@ -9,6 +9,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
+import { getLetterState } from "./letterState";
 import { Text } from "./Text";
 import {
   darkTheme,
@@ -29,51 +30,9 @@ export function Square(props: {
   const { index, letter, word, isCurrentTry, guess } = props;
   const shadowStyle = useShadowStyle("shadow2");
   const isDarkMode = useIsDarkMode();
-  const hit = !isCurrentTry && word[index] === letter;
-  const letterOccurrances = word.split("").filter((l) => l === letter).length;
-  const letterHitsElsewhere =
-    (!hit &&
-      guess?.split("").filter((l2, i) => word[i] === l2 && l2 === letter)
-        .length) ||
-    0;
-
-  const naiveAlmost =
-    letter !== undefined &&
-    !isCurrentTry &&
-    !hit &&
-    (letterOccurrances > 1
-      ? letterHitsElsewhere < letterOccurrances
-      : letterHitsElsewhere === 0) &&
-    word.indexOf(letter) > -1;
-
-  const numberOfOccurrencesInGuess =
-    guess?.split("").filter((l) => l === letter).length ?? 0;
-
-  const indicesOfOccurrencesInGuess =
-    guess?.split("").map((l) => (l === letter ? 1 : 0)) || [];
-
-  const numberOfOccurrencesInWord = word
-    .split("")
-    .filter((l) => l === letter).length;
-
-  let couldBeExtranousAlmost =
-    naiveAlmost && numberOfOccurrencesInGuess > numberOfOccurrencesInWord;
-
-  let isExtranousAlmost = couldBeExtranousAlmost;
-  const almost = Boolean(naiveAlmost && !isExtranousAlmost);
-  if (couldBeExtranousAlmost) {
-    let count = numberOfOccurrencesInWord;
-    for (let j = 0; j < 5; j++) {
-      let v = indicesOfOccurrencesInGuess[j];
-      if (v === 1) {
-        count = count - 1;
-        if (count < 0) {
-          indicesOfOccurrencesInGuess[j] = 0;
-        }
-      }
-    }
-    isExtranousAlmost = indicesOfOccurrencesInGuess[index] !== 1;
-  }
+  const letterState = getLetterState({ word, guess, letter, index });
+  const hit = !isCurrentTry && letterState === "hit";
+  const almost = !isCurrentTry && letterState === "almost";
 
   let letterAnimationStyle = useTypingAnimation();
   const bgStyle = useColorAnimation({ hit, almost, index });
